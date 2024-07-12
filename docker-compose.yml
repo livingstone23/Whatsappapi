@@ -1,0 +1,34 @@
+version: '3.8'
+
+networks:
+  backend:
+    name: acd-network
+
+services:
+  mssql:
+    build:
+      context: ./scripts/sql
+    container_name: acd-db
+    ports:
+      - "1433:1433"
+    environment:
+      SA_PASSWORD: "P@ssw0rd?"
+      ACCEPT_EULA: "Y"
+      MSSQL_PID: "Express"
+    networks:
+      - backend
+  
+  api:
+    build:
+      context: .
+      dockerfile: ./api/ACD.Api/Dockerfile
+    container_name: acd-webapi
+    depends_on:
+      - mssql
+    ports:
+      - "5001:8080"
+    environment:
+      ConnectionStrings__DbConnection: Server=mssql;Database=ACDDatabase;User Id=sa;Password=P@ssw0rd?;Encrypt=False
+      ASPNETCORE_ENVIRONMENT: "Development"
+    networks:
+      - backend
