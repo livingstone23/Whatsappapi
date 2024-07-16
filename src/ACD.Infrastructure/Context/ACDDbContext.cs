@@ -22,6 +22,9 @@ public class ACDDbContext: DbContext
     public DbSet<BalanceServiceProvider> BalanceServiceProviders { get; set; }
 
 
+    public DbSet<WhatsAppMessage> WhatsAppMessages { get; set; }
+
+
     /// <summary>
     /// Overrides the default behavior of model creation to configure the entity mappings for the BalanceServiceProvider table in the database.
     /// </summary>
@@ -103,6 +106,84 @@ public class ACDDbContext: DbContext
             .IsUnicode(false);
 
     });
+
+
+    modelBuilder.Entity<WhatsAppMessage>(entity =>
+    {   
+
+        entity.ToTable("WhatsAppMessage", schema: "dbo");
+
+        entity.HasKey(e => e.Id);
+
+        entity.Property(e => e.Id)
+            .ValueGeneratedOnAdd();  // Indica que el Id es auto incremental
+
+        entity.Property(e => e.Oui);
+
+        entity.Property(e => e.PhoneTo)
+            .HasMaxLength(20)
+            .IsUnicode(true);
+
+        entity.Property(e => e.TemplateNameUsed)
+            .HasMaxLength(50)
+            .IsUnicode(true);
+
+        entity.Property(e => e.MessageBody)
+            .HasMaxLength(3000)
+            .IsUnicode(true);
+
+        entity.Property(e => e.MessageId)
+            .HasMaxLength(100)
+            .IsUnicode(true);
+
+        entity.Property(e => e.PhoneFrom)
+            .HasMaxLength(20)
+            .IsUnicode(true);
+
+        entity.Property(e => e.PhoneId)
+            .HasMaxLength(20)
+            .IsUnicode(true);
+
+        entity.Property(e => e.NotificationId);
+
+        entity.Property(e => e.SendingAt);
+        entity.Property(e => e.SendingDate);
+
+        entity.Property(e => e.DeliveredAt);
+        entity.Property(e => e.DeliveredDate);
+
+        entity.Property(e => e.ReadedAt);
+        entity.Property(e => e.ReadedDate);
+
+        entity.Property(e => e.FailedAt);
+        entity.Property(e => e.FailedDate);
+
+
+
+
+        //Campos de control
+        entity.Property(e => e.Created);
+
+
+
+        entity.Property(e => e.CreatedBy)
+            .HasMaxLength(50)
+            .IsUnicode(false);
+
+        entity.Property(e => e.Updated)
+            .IsUnicode(false);
+
+
+        entity.Property(e => e.UpdatedBy)
+            .HasMaxLength(50)
+            .IsUnicode(false);
+
+
+        entity.Property(e => e.GcRecord)
+            .IsUnicode(false);
+
+    });
+
 
 
         base.OnModelCreating(modelBuilder);

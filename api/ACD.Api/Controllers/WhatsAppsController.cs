@@ -1,8 +1,14 @@
 ﻿using ACD.Api.Dto;
+using ACD.Api.Helper;
 using ACD.Api.Services.WhatsappCloud.SendMessage;
+using ACD.Domain.Interfaces;
 using ACD.Domain.Models.WhatsApp;
+using ACD.Domain.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
+using SendGrid.Helpers.Mail;
+using SendGrid;
 
 namespace ACD.Api.Controllers
 {
@@ -13,24 +19,73 @@ namespace ACD.Api.Controllers
 
         private readonly IWhatsappCloudSendMessage _whatsappCloudSendMessage;
 
+        private readonly IConfiguration _configuration;
 
-        public WhatsAppsController(IWhatsappCloudSendMessage whatsappCloudSendMessage)
+        private readonly IWhatsAppMessageRepository _whatsAppMessageRepository;
+        
+        private readonly ILogger<WhatsAppsController> _logger;
+
+
+        public WhatsAppsController(IWhatsappCloudSendMessage whatsappCloudSendMessage, 
+                                IConfiguration configuration,
+                                IWhatsAppMessageRepository whatsAppMessageRepository,
+                                ILogger<WhatsAppsController> logger
+                                )
         {
+
+
             _whatsappCloudSendMessage = whatsappCloudSendMessage;
+            _configuration = configuration;
+            _whatsAppMessageRepository = whatsAppMessageRepository;
+            _logger = logger;
         }
 
 
         //Method Get to send notificacation
         //In the route name the method SendNotification
-        [HttpGet]
+        [HttpPost]
         [Route("SendNotification")]
         public async Task<IActionResult> SendMessage([FromBody] WhatsAppMessageNotification model)
         {
             try
             {
-                var result = await _whatsappCloudSendMessage.Execute(model);
 
-                if (result)
+                WhatsAppResponseDTO whatsappResponse = await _whatsappCloudSendMessage.Execute(model);
+
+
+                WhatsAppMessage newWhatsAppMessage   = new WhatsAppMessage                 
+                {
+
+                    PhoneTo = model.To,
+                    TemplateNameUsed = model.Template.Name,
+                    PhoneFrom = "123456",
+                    PhoneId = "PhoneId_123456",
+                    //Guardamos los parametros del mensaje
+                    MessageBody = JsonConvert.SerializeObject(model.Template.Components[0].Parameters),
+                    Created = DateTime.Now,
+                    Oui = Guid.NewGuid()
+                };
+
+                if (whatsappResponse.IsSuccess)
+                {
+                    newWhatsAppMessage.MessageId = whatsappResponse.MessageId;
+                    newWhatsAppMessage.SendingAt = true;
+                    newWhatsAppMessage.SendingDate  = DateTime.Now;
+
+                }
+                else
+                {
+                    newWhatsAppMessage.FailedAt = true;
+                    newWhatsAppMessage.FailedDate = DateTime.Now;
+                }
+
+                await _whatsAppMessageRepository.Add(newWhatsAppMessage);
+
+                string notification = $" El MessageId es: {whatsappResponse.MessageId}";
+                
+                var resultMail = SendEmail(notification);
+
+                if (whatsappResponse.IsSuccess)
                 {
                     return Ok("EVENT_RECEIVED");
                 }
@@ -146,9 +201,72 @@ namespace ACD.Api.Controllers
             }
         }
 
+        /// <summary>
+        /// metodo privado para envio de correo electronico
+        /// si se envio correctamente retorna true de lo contrario false
+        /// </summary>
+        /// <param name="notification"></param>
+        /// <returns></returns>
+        private async Task<bool> SendEmail(string notification)
+        {
+            try
+            {
 
+                ///Objtengo sendgrid api key desde el archivo del appsettings.json
+                var apiKey = _configuration["SendGrid:ApiKey"];
 
+                
+                
+                var client = new SendGridClient(apiKey);
+                var from = new EmailAddress("livingstone23@gmail.com", "Livingstone");
+                var subject = "Asunto de correo : " + notification;
+                var to = new EmailAddress("livingstone23@gmail.com", "Livingstone");
+                var plainTextContent = "This is a test email sent from SendGrid.";
+                var htmlContent = $"<strong> {notification} </strong>";
+                var msg = MailHelper.CreateSingleEmail(from, to, subject, plainTextContent, htmlContent);
 
+                var response = await client.SendEmailAsync(msg);
+
+                if (response.Headers.TryGetValues("X-Message-Id", out var messageIds))
+                {
+                    var messageId = messageIds.FirstOrDefault();
+                    return true; // Retorna el MessageId para su uso posterior
+                }
+
+                return true;
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "Error al enviar correo electrónico");
+                return false;
+            }
+        }
+
+        //[HttpPost]
+        //public IActionResult ReceiveWebhook([FromBody] WhatsAppBusinessAccountNotification notification)
+        //{
+        //    foreach (var entry in notification.Entry)
+        //    {
+        //        foreach (var change in entry.Changes)
+        //        {
+        //            var value = change.Value;
+
+        //            if (value.Statuses != null)
+        //            {
+        //                foreach (var status in value.Statuses)
+        //                {
+        //                    // Procesa el estado del mensaje aquí
+        //                    var messageId = status.Id;
+        //                    var messageStatus = status.Status;
+        //                    var timestamp = status.Timestamp;
+
+        //                    // Lógica para manejar el estado del mensaje
+        //                }
+        //            }
+        //        }
+        //    }
+        //    return Ok();
+        //}
 
 
 

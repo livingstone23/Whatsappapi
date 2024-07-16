@@ -1,4 +1,6 @@
-﻿namespace ACD.Api.Services.WhatsappCloud.SendMessage;
+﻿using ACD.Api.Dto;
+
+namespace ACD.Api.Services.WhatsappCloud.SendMessage;
 
 
 
@@ -6,6 +8,6 @@
 public interface IWhatsappCloudSendMessage
 {
 
-    Task<bool> Execute(object model);
+    Task<WhatsAppResponseDTO> Execute(object model);
 
 }

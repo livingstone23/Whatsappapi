@@ -25,6 +25,9 @@ public class AutoMapperConfig : Profile
         CreateMap<BalanceServiceProvider, BalanceServiceProviderDTO>();
         CreateMap<BalanceServiceProviderDTO, BalanceServiceProvider>();
 
+        CreateMap<WhatsAppMessage, WhatsAppMessageDTO>();
+        CreateMap<WhatsAppMessageDTO, WhatsAppMessage>();
+
         //Mapping for getting data from the web
         CreateMap<BalanceServiceProviderResponse, BalanceServiceProviderDTO>()
             .ForMember(dest => dest.BspCode, opt => opt.MapFrom(src => src.brpCode))

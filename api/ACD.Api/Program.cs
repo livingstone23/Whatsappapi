@@ -46,6 +46,10 @@ builder.Services.AddSingleton<IWhatsappCloudSendMessage, WhatsappCloudSendMessag
 builder.Services.AddEndpointsApiExplorer();
 
 
+// Load configuration from appsettings.json
+builder.Configuration.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
+
+
 builder.Services.AddSwaggerGen(opts =>
 {
     opts.SwaggerDoc("v1", new OpenApiInfo { Title = "LaConchaLora API Test con WhatsApp", Version = "v1" });

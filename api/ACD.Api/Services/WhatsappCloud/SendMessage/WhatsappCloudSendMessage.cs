@@ -1,5 +1,6 @@
 ﻿using System.Net.Http.Headers;
 using System.Text;
+using ACD.Api.Dto;
 using Newtonsoft.Json;
 
 
@@ -11,9 +12,11 @@ namespace ACD.Api.Services.WhatsappCloud.SendMessage;
 public class WhatsappCloudSendMessage : IWhatsappCloudSendMessage
 {
 
-    public async Task<bool> Execute(object model)
+    public async Task<WhatsAppResponseDTO> Execute(object model)
     {
         var client = new HttpClient();
+
+        WhatsAppResponseDTO responseDto = new WhatsAppResponseDTO();
 
         var byteData = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(model));
 
@@ -32,10 +35,29 @@ public class WhatsappCloudSendMessage : IWhatsappCloudSendMessage
 
             if (response.IsSuccessStatusCode)
             {
-                return true;
+                // Leer el contenido de la respuesta como un string
+                string jsonResponse = await response.Content.ReadAsStringAsync();
+
+                // Deserializar el string JSON a un objeto dinámico
+                dynamic responseObject = JsonConvert.DeserializeObject<dynamic>(jsonResponse);
+
+                // Ahora puedes acceder a las propiedades del objeto deserializado
+                //string messageId = responseObject.messages[0].id;
+                //string messageStatus = responseObject.messages[0].message_status;
+
+                responseDto.MessageId = responseObject.messages[0].id;
+                responseDto.MessageStatus = responseObject.messages[0].message_status;
+                responseDto.IsSuccess = true;
+
+                // Si necesitas trabajar con un objeto específico en lugar de uno dinámico,
+                // primero define una clase que coincida con la estructura del JSON y luego deserializa a ese tipo.
+
+
+                return responseDto;
             }
 
-            return false;
+            responseDto.IsSuccess = false;
+            return responseDto;
 
         }
     }

@@ -40,6 +40,16 @@ public static class InfrastructureDependencies
         services.AddScoped<IBalanceServiceProviderService, BalanceServiceProviderService>();
 
 
+
+
+        services.AddScoped<IWhatsAppMessageRepository, WhatsAppMessageRepository>();
+
+        // Register all services for dependency injection
+        services.AddScoped<IWhatsAppMessageService, WhatsAppMessageService>();
+
+
+
+
         return services;
 
 
