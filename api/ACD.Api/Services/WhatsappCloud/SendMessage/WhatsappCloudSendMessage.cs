@@ -12,6 +12,13 @@ namespace ACD.Api.Services.WhatsappCloud.SendMessage;
 public class WhatsappCloudSendMessage : IWhatsappCloudSendMessage
 {
 
+    private readonly IConfiguration _configuration;
+
+    public WhatsappCloudSendMessage(IConfiguration configuration)
+    {
+        _configuration = configuration;
+    }
+
     public async Task<WhatsAppResponseDTO> Execute(object model)
     {
         var client = new HttpClient();
@@ -23,8 +30,8 @@ public class WhatsappCloudSendMessage : IWhatsappCloudSendMessage
         using (var content = new ByteArrayContent(byteData))
         {
             string endpoint = "https://graph.facebook.com";
-            string phoneNumberId = "";
-            string accessToken = "";
+            string phoneNumberId = _configuration["WhatsApp:PhoneNumberId"]; 
+            string accessToken = _configuration["WhatsApp:AccessToken"];
             string uri = $"{endpoint}/v20.0/{phoneNumberId}/messages";
 
             content.Headers.ContentType = new MediaTypeHeaderValue("application/json");

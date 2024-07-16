@@ -58,8 +58,8 @@ namespace ACD.Api.Controllers
 
                     PhoneTo = model.To,
                     TemplateNameUsed = model.Template.Name,
-                    PhoneFrom = "123456",
-                    PhoneId = "PhoneId_123456",
+                    PhoneFrom = _configuration["WhatsApp:PhoneNumber"],
+                    PhoneId = _configuration["WhatsApp:PhoneNumberId"],
                     //Guardamos los parametros del mensaje
                     MessageBody = JsonConvert.SerializeObject(model.Template.Components[0].Parameters),
                     Created = DateTime.Now,
