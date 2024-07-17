@@ -162,6 +162,31 @@ namespace ACD.Api.Controllers
 
 
 
+        ///Metodo para identificar mensaje por Id
+        [HttpGet]
+        [Route("GetMessageById")]
+        public async Task<IActionResult> GetMessageById(string messageId)
+        {
+            try
+            {
+                var message = await _whatsAppMessageRepository.GetByMessageId(messageId);
+
+                if (message != null)
+                {
+                    return Ok(message);
+                }
+
+                return NotFound();
+            }
+            catch (Exception e)
+            {
+                return BadRequest();
+            }
+        }
+        
+
+
+
         /// <summary>
         /// Method for processing the message sent by the client.
         /// </summary>
@@ -242,31 +267,7 @@ namespace ACD.Api.Controllers
             }
         }
 
-        //[HttpPost]
-        //public IActionResult ReceiveWebhook([FromBody] WhatsAppBusinessAccountNotification notification)
-        //{
-        //    foreach (var entry in notification.Entry)
-        //    {
-        //        foreach (var change in entry.Changes)
-        //        {
-        //            var value = change.Value;
-
-        //            if (value.Statuses != null)
-        //            {
-        //                foreach (var status in value.Statuses)
-        //                {
-        //                    // Procesa el estado del mensaje aquí
-        //                    var messageId = status.Id;
-        //                    var messageStatus = status.Status;
-        //                    var timestamp = status.Timestamp;
-
-        //                    // Lógica para manejar el estado del mensaje
-        //                }
-        //            }
-        //        }
-        //    }
-        //    return Ok();
-        //}
+       
 
 
 

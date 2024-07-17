@@ -37,5 +37,17 @@ public class WhatsAppMessageService: IWhatsAppMessageService
         }
     }
 
-
+    public async Task<WhatsAppMessage> GetByMessageId(string MessageId)
+    {
+        try
+        {
+            WhatsAppMessage foundWhatsAppMessage = await _whatsAppMessageRepository.GetByMessageId(MessageId);
+            return foundWhatsAppMessage;
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+            throw;
+        }
+    }
 }

@@ -11,4 +11,6 @@ public interface IWhatsAppMessageService
 
     Task<WhatsAppMessage> Add(WhatsAppMessage whatsAppMessage);
 
+    Task<WhatsAppMessage> GetByMessageId(string MessageId);
+
 }
