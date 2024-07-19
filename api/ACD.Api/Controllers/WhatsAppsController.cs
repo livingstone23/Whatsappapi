@@ -1,6 +1,7 @@
 ﻿using ACD.Api.Dto;
 using ACD.Api.Helper;
 using ACD.Api.Services.WhatsappCloud.SendMessage;
+using ACD.Api.Webhooks;
 using ACD.Domain.Interfaces;
 using ACD.Domain.Models.WhatsApp;
 using ACD.Domain.Services;
@@ -81,7 +82,7 @@ namespace ACD.Api.Controllers
 
                 await _whatsAppMessageRepository.Add(newWhatsAppMessage);
 
-                string notification = $" El MessageId es: {whatsappResponse.MessageId}";
+                string notification = $" Desde SendNotification El MessageId es: {whatsappResponse.MessageId}";
                 
                 var resultMail = SendEmail(notification);
 
@@ -97,6 +98,72 @@ namespace ACD.Api.Controllers
                 return Ok("EVENT_RECEIVED");
             }
         }
+
+
+
+        [HttpPost]
+        public async Task<IActionResult> ReceiveWebhook([FromBody] WhatsAppWebhookPayload payload)
+        {
+            try
+            {
+                //Validamos que el payload no sea nulo
+                if (payload == null || payload.Entry == null || payload.Entry.Count == 0)
+                {
+                    return BadRequest("Invalid webhook payload.");
+                }
+
+                foreach (var entry in payload.Entry)
+                {
+                    foreach (var change in entry.Changes)
+                    {
+                        foreach (var status in change.Value.Statuses)
+                        {
+
+                            string notification = $" Desde Webhook El MessageId es: {status.Id} y el status es {status.StatusValue}";
+
+                            var resultMail = SendEmail(notification);
+
+
+                            var existingMessage = await _whatsAppMessageRepository.GetByMessageId(status.Id);
+                            if (existingMessage != null)
+                            {
+                                switch (status.StatusValue)
+                                {
+                                    case "delivered":
+                                        existingMessage.DeliveredAt = true;
+                                        existingMessage.DeliveredDate = DateTime.Now;
+                                        break;
+                                    case "read":
+                                        existingMessage.ReadedAt = true;
+                                        existingMessage.ReadedDate = DateTime.Now;
+                                        break;
+                                    case "failed":
+                                        existingMessage.FailedAt = true;
+                                        existingMessage.FailedDate = DateTime.Now;
+                                        break;
+                                    // Puedes agregar más casos aquí si es necesario
+                                }
+
+                                existingMessage.Updated = DateTime.Now;
+                                await _whatsAppMessageRepository.Update(existingMessage);
+                            }
+                        }
+                    }
+                }
+
+
+                
+
+                return Ok("EVENT_RECEIVED");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error processing webhook");
+                //return StatusCode(StatusCodes.Status500InternalServerError, "Internal server error");
+                return Ok("EVENT_RECEIVED");
+            }
+        }
+
 
 
         /// <summary>
@@ -127,38 +194,38 @@ namespace ACD.Api.Controllers
 
 
 
-        /// <summary>
-        /// Metodo para recibir el mensaje enviado por el cliente.
-        /// </summary>
-        /// <param name="body"></param>
-        /// <returns></returns>
-        [HttpPost]
-        public async Task<IActionResult> ReceivedMessage([FromBody] WhatsAppCloudModel body)
-        {
+        ///// <summary>
+        ///// Metodo para recibir el mensaje enviado por el cliente.
+        ///// </summary>
+        ///// <param name="body"></param>
+        ///// <returns></returns>
+        //[HttpPost]
+        //public async Task<IActionResult> ReceivedMessage([FromBody] WhatsAppCloudModel body)
+        //{
 
-            try
-            {
+        //    try
+        //    {
 
-                var Message = body.Entry[0]?.Changes[0]?.Value?.Messages[0];
-                if(Message == null)
-                {
-                    var userNumber = Message.From;
-                    var userText = GetUserText(Message);
-                }
+        //        var Message = body.Entry[0]?.Changes[0]?.Value?.Messages[0];
+        //        if(Message == null)
+        //        {
+        //            var userNumber = Message.From;
+        //            var userText = GetUserText(Message);
+        //        }
 
 
 
-                return Ok("EVENT_RECEIVED");
+        //        return Ok("EVENT_RECEIVED");
 
-            }
+        //    }
 
-            catch (Exception ex)
-            {
+        //    catch (Exception ex)
+        //    {
 
-                return Ok("EVENT_RECEIVED");
+        //        return Ok("EVENT_RECEIVED");
 
-            }
-        }
+        //    }
+        //}
 
 
 
